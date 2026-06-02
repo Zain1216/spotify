@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/audio_player_provider.dart';
-import '../models/song_model.dart';
 
 class PlaylistDetailScreen extends StatelessWidget {
   const PlaylistDetailScreen({super.key});
@@ -88,7 +87,7 @@ class PlaylistDetailScreen extends StatelessWidget {
                             style: GoogleFonts.montserrat(
                               color: Colors.white,
                               fontSize: 48,
-                              fontWeight: FontWeight.black,
+                              fontWeight: FontWeight.w900,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -177,6 +176,21 @@ class PlaylistDetailScreen extends StatelessWidget {
                     icon: const Icon(Icons.more_horiz, color: Colors.white70, size: 28),
                     onPressed: () {},
                   ),
+                  if (playlist.id == 'local_imports') ...[
+                    const SizedBox(width: 24),
+                    ElevatedButton.icon(
+                      onPressed: () => playerProvider.importLocalSongs(),
+                      icon: const Icon(Icons.upload_file, color: Colors.black, size: 20),
+                      label: const Text('Import MP3s', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1DB954),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -257,7 +271,7 @@ class PlaylistDetailScreen extends StatelessWidget {
                                       style: GoogleFonts.outfit(
                                         color: isCurrentPlaying ? const Color(0xFF1DB954) : Colors.white,
                                         fontSize: 15,
-                                        fontWeight: FontWeight.w655,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),

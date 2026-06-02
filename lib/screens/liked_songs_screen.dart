@@ -90,7 +90,7 @@ class LikedSongsScreen extends StatelessWidget {
                             style: GoogleFonts.montserrat(
                               color: Colors.white,
                               fontSize: 48,
-                              fontWeight: FontWeight.black,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -285,7 +285,7 @@ class LikedSongsScreen extends StatelessWidget {
                                             style: GoogleFonts.outfit(
                                               color: isCurrentPlaying ? const Color(0xFF1DB954) : Colors.white,
                                               fontSize: 15,
-                                              fontWeight: FontWeight.w655,
+                                              fontWeight: FontWeight.w600,
                                             ),
                                             overflow: TextOverflow.ellipsis,
                                           ),

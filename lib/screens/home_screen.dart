@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/audio_player_provider.dart';
 import '../models/song_model.dart';
-import '../data/mock_data.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -48,12 +47,16 @@ class HomeScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      greeting,
-                      style: GoogleFonts.montserrat(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Text(
+                        greeting,
+                        style: GoogleFonts.montserrat(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Row(
@@ -67,16 +70,47 @@ class HomeScreen extends StatelessWidget {
                           onPressed: () {},
                         ),
                         const SizedBox(width: 8),
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.white12,
-                          child: Text(
-                            'Z',
-                            style: GoogleFonts.montserrat(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                        PopupMenuButton<String>(
+                          onSelected: (value) {
+                            if (value == 'logout') {
+                              playerProvider.logout();
+                            }
+                          },
+                          color: const Color(0xFF282828),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Colors.white12,
+                            child: Text(
+                              (playerProvider.currentUser?.email ?? 'G')[0].toUpperCase(),
+                              style: GoogleFonts.montserrat(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
+                          itemBuilder: (context) => [
+                            PopupMenuItem<String>(
+                              value: 'email',
+                              enabled: false,
+                              child: Text(
+                                playerProvider.currentUser?.email ?? 'Guest User',
+                                style: const TextStyle(color: Colors.white60, fontSize: 13),
+                              ),
+                            ),
+                            const PopupMenuItem<String>(
+                              value: 'logout',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.logout, color: Colors.white, size: 18),
+                                  SizedBox(width: 8),
+                                  Text('Log Out', style: TextStyle(color: Colors.white)),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -131,8 +165,6 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildQuickCard(BuildContext context, Playlist playlist, AudioPlayerProvider provider) {
-    final isCurrent = provider.currentPlaylist?.id == playlist.id;
-
     return InkWell(
       onTap: () {
         provider.navigateTo('playlist_detail', playlist: playlist);

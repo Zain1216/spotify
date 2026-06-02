@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/audio_player_provider.dart';
-import '../models/song_model.dart';
 import 'home_screen.dart';
 import 'search_screen.dart';
 import 'liked_songs_screen.dart';
 import 'playlist_detail_screen.dart';
+import 'admin_upload_screen.dart';
 import '../widgets/lyrics_panel.dart';
 
 class SpotifyShell extends StatelessWidget {
@@ -32,11 +32,17 @@ class SpotifyShell extends StatelessWidget {
       case 'playlist_detail':
         bodyWidget = const PlaylistDetailScreen();
         break;
+      case 'admin_upload':
+        bodyWidget = const AdminUploadScreen();
+        break;
       case 'home':
       default:
         bodyWidget = const HomeScreen();
         break;
     }
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 720;
 
     return Scaffold(
       backgroundColor: const Color(0xFF000000),
@@ -46,11 +52,13 @@ class SpotifyShell extends StatelessWidget {
             child: Row(
               children: [
                 // Navigation Sidebar
-                _buildSidebar(context, playerProvider),
+                if (!isMobile) _buildSidebar(context, playerProvider),
                 // Main Content View
                 Expanded(
                   child: Container(
-                    margin: const EdgeInsets.only(top: 8, right: 8, bottom: 8),
+                    margin: isMobile
+                        ? const EdgeInsets.only(top: 8, left: 8, right: 8, bottom: 8)
+                        : const EdgeInsets.only(top: 8, right: 8, bottom: 8),
                     decoration: BoxDecoration(
                       color: const Color(0xFF121212),
                       borderRadius: BorderRadius.circular(8),
@@ -66,7 +74,66 @@ class SpotifyShell extends StatelessWidget {
           _buildPlayerBar(context, playerProvider),
         ],
       ),
+      bottomNavigationBar: isMobile
+          ? BottomNavigationBar(
+              backgroundColor: Colors.black,
+              selectedItemColor: const Color(0xFF1DB954),
+              unselectedItemColor: Colors.white60,
+              currentIndex: _getSelectedIndex(playerProvider.currentScreen, playerProvider.isAdmin),
+              onTap: (index) {
+                switch (index) {
+                  case 0:
+                    playerProvider.navigateTo('home');
+                    break;
+                  case 1:
+                    playerProvider.navigateTo('search');
+                    break;
+                  case 2:
+                    playerProvider.navigateTo('library');
+                    break;
+                  case 3:
+                    if (playerProvider.isAdmin) {
+                      playerProvider.navigateTo('admin_upload');
+                    }
+                    break;
+                }
+              },
+              items: [
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.home),
+                  label: 'Home',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.search),
+                  label: 'Search',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.library_music),
+                  label: 'Library',
+                ),
+                if (playerProvider.isAdmin)
+                  const BottomNavigationBarItem(
+                    icon: Icon(Icons.admin_panel_settings),
+                    label: 'Admin',
+                  ),
+              ],
+            )
+          : null,
     );
+  }
+
+  int _getSelectedIndex(String screen, bool isAdmin) {
+    switch (screen) {
+      case 'search':
+        return 1;
+      case 'library':
+        return 2;
+      case 'admin_upload':
+        return isAdmin ? 3 : 0;
+      case 'home':
+      default:
+        return 0;
+    }
   }
 
   Widget _buildSidebar(BuildContext context, AudioPlayerProvider provider) {
@@ -82,14 +149,19 @@ class SpotifyShell extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
             child: Row(
               children: [
-                const Icon(Icons.radio, color: Color(0xFF1DB954), size: 36),
+                Image.asset(
+                  'assets/images/logo_new.png',
+                  height: 32,
+                  width: 32,
+                  fit: BoxFit.contain,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   'Spotify',
                   style: GoogleFonts.montserrat(
                     color: Colors.white,
                     fontSize: 24,
-                    fontWeight: FontWeight.black,
+                    fontWeight: FontWeight.w900,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -119,6 +191,14 @@ class SpotifyShell extends StatelessWidget {
                   isActive: provider.currentScreen == 'search',
                   onTap: () => provider.navigateTo('search'),
                 ),
+                if (provider.isAdmin)
+                  _buildSidebarTile(
+                    icon: Icons.admin_panel_settings,
+                    title: 'Admin Panel',
+                    isActive: provider.currentScreen == 'admin_upload',
+                    iconColor: const Color(0xFF1DB954),
+                    onTap: () => provider.navigateTo('admin_upload'),
+                  ),
               ],
             ),
           ),
@@ -140,23 +220,46 @@ class SpotifyShell extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.library_music_outlined, color: Colors.white60, size: 22),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Your Library',
-                              style: GoogleFonts.outfit(
-                                color: Colors.white60,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                        Expanded(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.library_music_outlined, color: Colors.white60, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Your Library',
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white60,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.upload_file, color: Colors.white60, size: 18),
+                              tooltip: 'Import Songs',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => provider.importLocalSongs(),
+                            ),
+                            const SizedBox(width: 12),
+                            IconButton(
+                              icon: const Icon(Icons.add, color: Colors.white60, size: 18),
+                              tooltip: 'Create Playlist',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => _showCreatePlaylistDialog(context, provider),
                             ),
                           ],
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.add, color: Colors.white60, size: 20),
-                          onPressed: () => _showCreatePlaylistDialog(context, provider),
                         ),
                       ],
                     ),
@@ -223,6 +326,61 @@ class SpotifyShell extends StatelessWidget {
               ),
             ),
           ),
+          
+          // User profile / logout card at bottom of sidebar
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF121212),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.white24,
+                  child: Text(
+                    (provider.currentUser?.email ?? 'G')[0].toUpperCase(),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        provider.currentUser?.email ?? 'Guest User',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        provider.isAdmin ? 'Administrator' : 'Standard User',
+                        style: GoogleFonts.outfit(
+                          color: provider.isAdmin ? const Color(0xFF1DB954) : Colors.white54,
+                          fontSize: 10,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.logout, color: Colors.white60, size: 18),
+                  tooltip: 'Sign Out',
+                  onPressed: () => provider.logout(),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -258,6 +416,101 @@ class SpotifyShell extends StatelessWidget {
 
   Widget _buildPlayerBar(BuildContext context, AudioPlayerProvider provider) {
     final song = provider.currentSong;
+    if (song == null) return const SizedBox.shrink();
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 720;
+
+    if (isMobile) {
+      return Container(
+        height: 64,
+        margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        decoration: BoxDecoration(
+          color: const Color(0xFF282828),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    height: 40,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      image: DecorationImage(
+                        image: NetworkImage(song.coverUrl),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          song.title,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          song.artist,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white70,
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    song.isLiked ? Icons.favorite : Icons.favorite_border,
+                    color: song.isLiked ? const Color(0xFF1DB954) : Colors.white60,
+                    size: 20,
+                  ),
+                  onPressed: () => provider.toggleLike(song),
+                ),
+                GestureDetector(
+                  onTap: () => provider.togglePlay(),
+                  child: Container(
+                    height: 36,
+                    width: 36,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child: Icon(
+                      provider.isPlaying ? Icons.pause : Icons.play_arrow,
+                      color: Colors.black,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       height: 90,
@@ -269,60 +522,58 @@ class SpotifyShell extends StatelessWidget {
           // Left: Current Song Info
           Expanded(
             flex: 3,
-            child: song == null
-                ? const SizedBox.shrink()
-                : Row(
+            child: Row(
+              children: [
+                Container(
+                  height: 56,
+                  width: 56,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    image: DecorationImage(
+                      image: NetworkImage(song.coverUrl),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        height: 56,
-                        width: 56,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          image: DecorationImage(
-                            image: NetworkImage(song.coverUrl),
-                            fit: BoxFit.cover,
-                          ),
+                      Text(
+                        song.title,
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              song.title,
-                              style: GoogleFonts.outfit(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              song.artist,
-                              style: GoogleFonts.outfit(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                      Text(
+                        song.artist,
+                        style: GoogleFonts.outfit(
+                          color: Colors.white70,
+                          fontSize: 12,
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: Icon(
-                          song.isLiked ? Icons.favorite : Icons.favorite_border,
-                          color: song.isLiked ? const Color(0xFF1DB954) : Colors.white60,
-                          size: 20,
-                        ),
-                        onPressed: () => provider.toggleLike(song),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(
+                    song.isLiked ? Icons.favorite : Icons.favorite_border,
+                    color: song.isLiked ? const Color(0xFF1DB954) : Colors.white60,
+                    size: 20,
+                  ),
+                  onPressed: () => provider.toggleLike(song),
+                ),
+              ],
+            ),
           ),
 
           // Center: Player Controls

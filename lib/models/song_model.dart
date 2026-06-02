@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 class Song {
   final String id;
   final String title;
@@ -6,6 +8,7 @@ class Song {
   final Duration duration;
   final String audioUrl;
   final String coverUrl;
+  final Uint8List? audioBytes;
   bool isLiked;
 
   Song({
@@ -16,6 +19,7 @@ class Song {
     required this.duration,
     required this.audioUrl,
     required this.coverUrl,
+    this.audioBytes,
     this.isLiked = false,
   });
 
@@ -27,6 +31,7 @@ class Song {
     Duration? duration,
     String? audioUrl,
     String? coverUrl,
+    Uint8List? audioBytes,
     bool? isLiked,
   }) {
     return Song(
@@ -37,7 +42,34 @@ class Song {
       duration: duration ?? this.duration,
       audioUrl: audioUrl ?? this.audioUrl,
       coverUrl: coverUrl ?? this.coverUrl,
+      audioBytes: audioBytes ?? this.audioBytes,
       isLiked: isLiked ?? this.isLiked,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'artist': artist,
+      'album': album,
+      'durationMs': duration.inMilliseconds,
+      'audioUrl': audioUrl,
+      'coverUrl': coverUrl,
+      'isLiked': isLiked,
+    };
+  }
+
+  factory Song.fromMap(Map<String, dynamic> map, String docId) {
+    return Song(
+      id: docId,
+      title: map['title'] ?? '',
+      artist: map['artist'] ?? '',
+      album: map['album'] ?? '',
+      duration: Duration(milliseconds: map['durationMs'] ?? 0),
+      audioUrl: map['audioUrl'] ?? '',
+      coverUrl: map['coverUrl'] ?? '',
+      isLiked: map['isLiked'] ?? false,
     );
   }
 }

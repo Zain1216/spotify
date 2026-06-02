@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/audio_player_provider.dart';
-import '../models/song_model.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});

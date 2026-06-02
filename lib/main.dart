@@ -1,10 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'providers/audio_player_provider.dart';
 import 'screens/spotify_shell.dart';
+import 'screens/login_screen.dart';
+import 'services/firebase_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    FirebaseService.isInitialized = true;
+  } catch (e) {
+    debugPrint("Firebase initialization failed: $e");
+    debugPrint("Ensure you configure DefaultFirebaseOptions in lib/firebase_options.dart with your Firebase keys!");
+  }
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => AudioPlayerProvider(),
@@ -47,7 +62,24 @@ class SpotifyCloneApp extends StatelessWidget {
           ThemeData.dark().textTheme,
         ),
       ),
-      home: const SpotifyShell(),
+      home: StreamBuilder<AuthUser?>(
+        stream: FirebaseService().authStateChanges,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF1DB954),
+                ),
+              ),
+            );
+          }
+          if (snapshot.hasData && snapshot.data != null) {
+            return const SpotifyShell();
+          }
+          return const LoginScreen();
+        },
+      ),
     );
   }
 }
